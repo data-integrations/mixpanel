@@ -1,0 +1,54 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "configuration-groups": [
+    {
+      "label": "General",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "API Secret",
+          "name": "apiSecret"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "From date",
+          "name": "fromDate"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "To date",
+          "name": "toDate"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Events",
+          "name": "events"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Filter",
+          "name": "filter"
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+      }
+    }
+  ]
+}
