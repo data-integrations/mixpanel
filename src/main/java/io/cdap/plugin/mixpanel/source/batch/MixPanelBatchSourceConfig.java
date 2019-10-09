@@ -36,7 +36,7 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   public static final String PROPERTY_FILTER = "filter";
   public static final String PROPERTY_URL = "mixPanelUrl";
 
-  private static final Pattern dateRe = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\d");
+  private static final Pattern DATE_REGEX = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\d");
 
   @Name(PROPERTY_API_SECRET)
   @Description("Mixpanel API secret.")
@@ -110,6 +110,9 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
     return filter;
   }
 
+  /**
+   * Allows to override default mixpanel. Simplifies testing.
+   */
   public String getMixPanelUrl() {
     if (mixPanelUrl == null || mixPanelUrl.isEmpty()) {
       return "https://data.mixpanel.com/api/2.0/export/";
@@ -119,14 +122,14 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   }
 
   void validate(FailureCollector failureCollector) {
-    if (!dateRe.matcher(getFromDate()).matches()) {
+    if (!DATE_REGEX.matcher(getFromDate()).matches()) {
       failureCollector
-        .addFailure("Incorrect date format.", "Change date to YYYY-MM-DD format")
+        .addFailure(String.format("Invalid date '%s'", getFromDate()), "Change date to YYYY-MM-DD format")
         .withConfigProperty(PROPERTY_FROM_DATE);
     }
-    if (!dateRe.matcher(getToDate()).matches()) {
+    if (!DATE_REGEX.matcher(getToDate()).matches()) {
       failureCollector
-        .addFailure("Incorrect date format.", "Change date to YYYY-MM-DD format")
+        .addFailure(String.format("Invalid date '%s'", getToDate()), "Change date to YYYY-MM-DD format")
         .withConfigProperty(PROPERTY_TO_DATE);
     }
   }

@@ -14,7 +14,7 @@ public class MixPanelBatchSourceConfigTest {
   private static final String MOCK_STAGE = "mockStage";
 
   @Test
-  public void testValidate(){
+  public void testValidate() {
     MixPanelBatchSourceConfig config = MixPanelBatchSourceConfig.builder()
       .setFromDate("1234-11-11")
       .setToDate("2345-11-11")
@@ -26,7 +26,7 @@ public class MixPanelBatchSourceConfigTest {
   }
 
   @Test
-  public void testDateInvalid(){
+  public void testDateInvalid() {
     MixPanelBatchSourceConfig invalidFromDate = MixPanelBatchSourceConfig.builder()
       .setFromDate("invalid")
       .setToDate("2345-11-11")

@@ -31,6 +31,7 @@ import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.plugin.common.IdUtils;
 import io.cdap.plugin.common.LineageRecorder;
 import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
 @Plugin(type = BatchSource.PLUGIN_TYPE)
 @Name(MixPanelBatchSource.NAME)
 @Description("Reads events from MixPanel.")
-public class MixPanelBatchSource extends BatchSource<NullWritable, String, StructuredRecord> {
+public class MixPanelBatchSource extends BatchSource<NullWritable, Text, StructuredRecord> {
   public static final String NAME = "MixPanel";
   private static final Schema MIX_PANEL_RECORD_SCHEMA = Schema.recordOf(
     "mixPanelRecord", Schema.Field.of("event", Schema.of(Schema.Type.STRING))
@@ -56,7 +57,6 @@ public class MixPanelBatchSource extends BatchSource<NullWritable, String, Struc
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
-    IdUtils.validateId(config.referenceName);
     validateConfiguration(pipelineConfigurer.getStageConfigurer().getFailureCollector());
     pipelineConfigurer.getStageConfigurer().setOutputSchema(MIX_PANEL_RECORD_SCHEMA);
   }
@@ -75,11 +75,12 @@ public class MixPanelBatchSource extends BatchSource<NullWritable, String, Struc
   }
 
   @Override
-  public void transform(KeyValue<NullWritable, String> input, Emitter<StructuredRecord> emitter) {
-    emitter.emit(StructuredRecord.builder(MIX_PANEL_RECORD_SCHEMA).set("event", input.getValue()).build());
+  public void transform(KeyValue<NullWritable, Text> input, Emitter<StructuredRecord> emitter) {
+    emitter.emit(StructuredRecord.builder(MIX_PANEL_RECORD_SCHEMA).set("event", input.getValue().toString()).build());
   }
 
   private void validateConfiguration(FailureCollector failureCollector) {
+    IdUtils.validateReferenceName(config.referenceName, failureCollector);
     config.validate(failureCollector);
     failureCollector.getOrThrowException();
   }

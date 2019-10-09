@@ -2,7 +2,7 @@
 
 Description
 -----------
-This plugin used to query MixPanel events.
+This plugin used to fetch MixPanel events.
 
 Properties
 ----------
@@ -10,7 +10,7 @@ Properties
 
 **Reference Name:** Name used to uniquely identify this source for lineage, annotating metadata, etc.
 
-**API Secret:** API secret to be used to authenticate in MixPanel API.
+**API Secret:** API secret used to authenticate in MixPanel API.
 
 **From date:** Start date for reports data.
 

@@ -16,6 +16,7 @@
 
 package io.cdap.plugin.mixpanel.source.batch.etl;
 
+import com.github.tomakehurst.wiremock.client.BasicCredentials;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -77,8 +78,9 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
   public void testMixPanelSource() throws Exception {
     WireMock.stubFor(
       WireMock.post(
-        WireMock.urlMatching("/api/2.0/export")).willReturn(
-        WireMock.aResponse().withBody("data1\ndata2")
+        WireMock.urlMatching("/api/2.0/export"))
+        .withBasicAuth("secret", "")
+        .willReturn(WireMock.aResponse().withBody("data1\ndata2")
       )
     );
 
@@ -89,6 +91,7 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
       .put(MixPanelBatchSourceConfig.PROPERTY_TO_DATE, "2019-10-10")
       .put(MixPanelBatchSourceConfig.PROPERTY_URL,
            String.format("http://localhost:%d/api/2.0/export", wireMockRule.port()))
+      .put(MixPanelBatchSourceConfig.PROPERTY_EVENTS, "events")
       .build();
 
     ETLStage source = new ETLStage("HttpReader", new ETLPlugin(MixPanelBatchSource.NAME, BatchSource.PLUGIN_TYPE,
@@ -109,6 +112,13 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
     workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
+    WireMock.verify(
+      WireMock.postRequestedFor(WireMock.urlEqualTo("/api/2.0/export"))
+        .withBasicAuth(new BasicCredentials("secret", ""))
+        .withRequestBody(WireMock.containing("from_date=2018-10-10"))
+        .withRequestBody(WireMock.containing("to_date=2019-10-10"))
+        .withRequestBody(WireMock.containing("event=events"))
+    );
 
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);

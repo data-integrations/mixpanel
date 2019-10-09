@@ -40,6 +40,13 @@
           "widget-type": "textbox",
           "label": "Filter",
           "name": "filter"
+        },
+        {
+          "widget-type": "hidden",
+          "name": "mixPanelUrl",
+          "widget-attributes": {
+            "default": "https://data.mixpanel.com/api/2.0/export/"
+          }
         }
       ]
     }
@@ -48,6 +55,14 @@
     {
       "widget-type": "non-editable-schema-editor",
       "schema": {
+        "name": "fileRecord",
+        "type": "record",
+        "fields": [
+          {
+            "name": "event",
+            "type": "string"
+          }
+        ]
       }
     }
   ]
