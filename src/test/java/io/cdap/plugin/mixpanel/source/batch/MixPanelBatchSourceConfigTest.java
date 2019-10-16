@@ -46,6 +46,18 @@ public class MixPanelBatchSourceConfigTest {
     assertSingleDateValidationFailed(failureCollector, MixPanelBatchSourceConfig.PROPERTY_TO_DATE);
   }
 
+  @Test
+  public void testInvalidUrl() {
+    MixPanelBatchSourceConfig invalidUrl = MixPanelBatchSourceConfig.builder()
+      .setFromDate("1234-11-11")
+      .setToDate("2345-11-11")
+      .setMixPanelUrl("invalid://url")
+      .build();
+
+    MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
+    invalidUrl.validate(failureCollector);
+    assertSingleDateValidationFailed(failureCollector, MixPanelBatchSourceConfig.PROPERTY_URL);
+  }
 
   void assertSingleDateValidationFailed(MockFailureCollector failureCollector, String paramName) {
     Assert.assertEquals(1, failureCollector.getValidationFailures().size());

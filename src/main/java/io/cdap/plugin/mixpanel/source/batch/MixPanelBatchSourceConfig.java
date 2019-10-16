@@ -22,6 +22,8 @@ import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -122,6 +124,13 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   }
 
   void validate(FailureCollector failureCollector) {
+    try {
+      new URL(getMixPanelUrl());
+    } catch (MalformedURLException e) {
+      failureCollector
+        .addFailure(String.format("Invalid URL '%s'", getMixPanelUrl()), "Change MixPanel url to valid")
+        .withConfigProperty(PROPERTY_URL);
+    }
     if (!DATE_REGEX.matcher(getFromDate()).matches()) {
       failureCollector
         .addFailure(String.format("Invalid date '%s'", getFromDate()), "Change date to YYYY-MM-DD format")
