@@ -20,6 +20,7 @@ import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.plugin.common.IdUtils;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
 import java.net.MalformedURLException;
@@ -38,7 +39,8 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   public static final String PROPERTY_FILTER = "filter";
   public static final String PROPERTY_URL = "mixPanelUrl";
 
-  private static final Pattern DATE_REGEX = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\d");
+  private static final Pattern DATE_REGEX = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
+  public static final String MIXPANEL_DEFAULT_URL = "https://data.mixpanel.com/api/2.0/export/";
 
   @Name(PROPERTY_API_SECRET)
   @Description("Mixpanel API secret.")
@@ -56,7 +58,7 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   protected String toDate;
 
   @Name(PROPERTY_EVENTS)
-  @Description("Comma separated list of events you would like to get data on.")
+  @Description("Comma separated list of events get data on.")
   @Nullable
   @Macro
   protected String events;
@@ -117,28 +119,28 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
    */
   public String getMixPanelUrl() {
     if (mixPanelUrl == null || mixPanelUrl.isEmpty()) {
-      return "https://data.mixpanel.com/api/2.0/export/";
-    } else {
-      return mixPanelUrl;
+      return MIXPANEL_DEFAULT_URL;
     }
+    return mixPanelUrl;
   }
 
   void validate(FailureCollector failureCollector) {
+    IdUtils.validateReferenceName(referenceName, failureCollector);
     try {
       new URL(getMixPanelUrl());
     } catch (MalformedURLException e) {
       failureCollector
-        .addFailure(String.format("Invalid URL '%s'", getMixPanelUrl()), "Change MixPanel url to valid")
+        .addFailure(String.format("Invalid URL '%s'.", getMixPanelUrl()), "Change MixPanel url to valid.")
         .withConfigProperty(PROPERTY_URL);
     }
     if (!DATE_REGEX.matcher(getFromDate()).matches()) {
       failureCollector
-        .addFailure(String.format("Invalid date '%s'", getFromDate()), "Change date to YYYY-MM-DD format")
+        .addFailure(String.format("Invalid date '%s'.", getFromDate()), "Change date to YYYY-MM-DD format.")
         .withConfigProperty(PROPERTY_FROM_DATE);
     }
     if (!DATE_REGEX.matcher(getToDate()).matches()) {
       failureCollector
-        .addFailure(String.format("Invalid date '%s'", getToDate()), "Change date to YYYY-MM-DD format")
+        .addFailure(String.format("Invalid date '%s'.", getToDate()), "Change date to YYYY-MM-DD format.")
         .withConfigProperty(PROPERTY_TO_DATE);
     }
   }

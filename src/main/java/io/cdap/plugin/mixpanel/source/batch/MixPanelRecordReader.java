@@ -55,7 +55,7 @@ import java.util.Scanner;
  * RecordReader implementation, which reads events in json format from MixPanel api.
  */
 public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
-  private static final Gson gson = new GsonBuilder().create();
+  private static final Gson GSON = new GsonBuilder().create();
   private String currentEvent;
   private CloseableHttpClient httpClient;
   private Scanner dataScanner;
@@ -99,7 +99,7 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
   public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
     Configuration conf = taskAttemptContext.getConfiguration();
     String configJson = conf.get(MixPanelInputFormatProvider.PROPERTY_CONFIG_JSON);
-    MixPanelBatchSourceConfig config = gson.fromJson(configJson, MixPanelBatchSourceConfig.class);
+    MixPanelBatchSourceConfig config = GSON.fromJson(configJson, MixPanelBatchSourceConfig.class);
 
     HttpClientContext context = createContext(config);
 
@@ -148,6 +148,9 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
 
   @Override
   public void close() throws IOException {
+    if (dataScanner != null) {
+      dataScanner.close();
+    }
     if (response != null) {
       response.close();
     }

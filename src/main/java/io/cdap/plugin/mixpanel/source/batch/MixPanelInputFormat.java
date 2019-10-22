@@ -31,7 +31,7 @@ import java.util.List;
 public class MixPanelInputFormat extends InputFormat {
   @Override
   public List<InputSplit> getSplits(JobContext jobContext) {
-    return Collections.singletonList(new MixPanelSplit());
+    return Collections.singletonList(new NoOpMixPanelSplit());
   }
 
   @Override

@@ -25,8 +25,8 @@ import java.io.DataOutput;
 /**
  * A no-op split.
  */
-public class MixPanelSplit extends InputSplit implements Writable {
-  public MixPanelSplit() {
+public class NoOpMixPanelSplit extends InputSplit implements Writable {
+  public NoOpMixPanelSplit() {
   }
 
   @Override

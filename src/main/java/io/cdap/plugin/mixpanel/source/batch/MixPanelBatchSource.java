@@ -28,7 +28,6 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
-import io.cdap.plugin.common.IdUtils;
 import io.cdap.plugin.common.LineageRecorder;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -45,8 +44,7 @@ import java.util.stream.Collectors;
 public class MixPanelBatchSource extends BatchSource<NullWritable, Text, StructuredRecord> {
   public static final String NAME = "MixPanel";
   private static final Schema MIX_PANEL_RECORD_SCHEMA = Schema.recordOf(
-    "mixPanelRecord", Schema.Field.of("event", Schema.of(Schema.Type.STRING))
-  );
+    "mixPanelRecord", Schema.Field.of("event", Schema.of(Schema.Type.STRING)));
 
   private final MixPanelBatchSourceConfig config;
 
@@ -80,7 +78,6 @@ public class MixPanelBatchSource extends BatchSource<NullWritable, Text, Structu
   }
 
   private void validateConfiguration(FailureCollector failureCollector) {
-    IdUtils.validateReferenceName(config.referenceName, failureCollector);
     config.validate(failureCollector);
     failureCollector.getOrThrowException();
   }

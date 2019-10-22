@@ -18,6 +18,7 @@ public class MixPanelBatchSourceConfigTest {
     MixPanelBatchSourceConfig config = MixPanelBatchSourceConfig.builder()
       .setFromDate("1234-11-11")
       .setToDate("2345-11-11")
+      .setReferenceName("testReference")
       .build();
 
     MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
@@ -30,6 +31,7 @@ public class MixPanelBatchSourceConfigTest {
     MixPanelBatchSourceConfig invalidFromDate = MixPanelBatchSourceConfig.builder()
       .setFromDate("invalid")
       .setToDate("2345-11-11")
+      .setReferenceName("testReference")
       .build();
 
     MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
@@ -39,6 +41,7 @@ public class MixPanelBatchSourceConfigTest {
     MixPanelBatchSourceConfig invalidToDate = MixPanelBatchSourceConfig.builder()
       .setFromDate("2345-11-11")
       .setToDate("invalid")
+      .setReferenceName("testReference")
       .build();
 
     failureCollector = new MockFailureCollector(MOCK_STAGE);
@@ -52,6 +55,7 @@ public class MixPanelBatchSourceConfigTest {
       .setFromDate("1234-11-11")
       .setToDate("2345-11-11")
       .setMixPanelUrl("invalid://url")
+      .setReferenceName("testReference")
       .build();
 
     MockFailureCollector failureCollector = new MockFailureCollector(MOCK_STAGE);
