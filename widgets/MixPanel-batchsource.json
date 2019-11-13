@@ -2,6 +2,7 @@
   "metadata": {
     "spec-version": "1.0"
   },
+  "display-name" : "MixPanel",
   "configuration-groups": [
     {
       "label": "General",
@@ -12,7 +13,7 @@
           "name": "referenceName"
         },
         {
-          "widget-type": "textbox",
+          "widget-type": "password",
           "label": "API Secret",
           "name": "apiSecret"
         },
@@ -25,6 +26,33 @@
           "widget-type": "textbox",
           "label": "To date",
           "name": "toDate"
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Generate schema by events fields",
+          "name": "schemaByEvents",
+          "widget-attributes": {
+            "on": {
+              "value": "on",
+              "label": "On"
+            },
+            "off": {
+              "value": "off",
+              "label": "Off"
+            },
+            "default": "off"
+          },
+          "plugin-function": {
+            "label": "Get Schema",
+            "widget": "outputSchema",
+            "output-property": "schema",
+            "position": "bottom",
+            "omit-properties": [
+              {
+                "name": "schema"
+              }
+            ]
+          }
         }
       ]
     },
@@ -32,7 +60,7 @@
       "label": "Advanced",
       "properties": [
         {
-          "widget-type": "textbox",
+          "widget-type": "csv",
           "label": "Events",
           "name": "events"
         },
@@ -43,9 +71,16 @@
         },
         {
           "widget-type": "hidden",
-          "name": "mixPanelUrl",
+          "name": "mixPanelDataUrl",
           "widget-attributes": {
             "default": "https://data.mixpanel.com/api/2.0/export/"
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "name": "mixPanelRestApiUrl",
+          "widget-attributes": {
+            "default": "https://mixpanel.com"
           }
         }
       ]
@@ -59,7 +94,7 @@
         "type": "record",
         "fields": [
           {
-            "name": "event",
+            "name": "raw_event",
             "type": "string"
           }
         ]

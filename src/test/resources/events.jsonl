@@ -1,0 +1,2 @@
+{"event":"Plan Upgraded","properties":{"distinct_id":"foo","time":1518314400,"Old Plan":"Basic","mp_lib":"python","New Plan":"premium","$lib_version":"1.0"}}
+{"event":"Custom Event","properties":{"distinct_id":"foo","time":1518314411,"data 1":"data 1 value","mp_lib":"python","data 2":"data 2 value","$lib_version":"1.0"}}

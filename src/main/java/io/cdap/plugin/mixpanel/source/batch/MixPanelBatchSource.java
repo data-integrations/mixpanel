@@ -43,8 +43,6 @@ import java.util.stream.Collectors;
 @Description("Reads events from MixPanel.")
 public class MixPanelBatchSource extends BatchSource<NullWritable, Text, StructuredRecord> {
   public static final String NAME = "MixPanel";
-  private static final Schema MIX_PANEL_RECORD_SCHEMA = Schema.recordOf(
-    "mixPanelRecord", Schema.Field.of("event", Schema.of(Schema.Type.STRING)));
 
   private final MixPanelBatchSourceConfig config;
 
@@ -56,16 +54,16 @@ public class MixPanelBatchSource extends BatchSource<NullWritable, Text, Structu
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     validateConfiguration(pipelineConfigurer.getStageConfigurer().getFailureCollector());
-    pipelineConfigurer.getStageConfigurer().setOutputSchema(MIX_PANEL_RECORD_SCHEMA);
+    pipelineConfigurer.getStageConfigurer().setOutputSchema(config.getSchema());
   }
 
   @Override
   public void prepareRun(BatchSourceContext batchSourceContext) {
     validateConfiguration(batchSourceContext.getFailureCollector());
     LineageRecorder lineageRecorder = new LineageRecorder(batchSourceContext, config.referenceName);
-    lineageRecorder.createExternalDataset(MIX_PANEL_RECORD_SCHEMA);
+    lineageRecorder.createExternalDataset(config.getSchema());
     lineageRecorder.recordRead("Read", "Reading MixPanel events",
-                               Objects.requireNonNull(MIX_PANEL_RECORD_SCHEMA.getFields()).stream()
+                               Objects.requireNonNull(config.getSchema().getFields()).stream()
                                  .map(Schema.Field::getName)
                                  .collect(Collectors.toList()));
 
@@ -74,7 +72,7 @@ public class MixPanelBatchSource extends BatchSource<NullWritable, Text, Structu
 
   @Override
   public void transform(KeyValue<NullWritable, Text> input, Emitter<StructuredRecord> emitter) {
-    emitter.emit(StructuredRecord.builder(MIX_PANEL_RECORD_SCHEMA).set("event", input.getValue().toString()).build());
+    emitter.emit(MixPanelSchemaHelper.getRecordForEvent(config, input.getValue().toString()));
   }
 
   private void validateConfiguration(FailureCollector failureCollector) {

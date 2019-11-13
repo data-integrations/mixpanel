@@ -62,7 +62,7 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
   private CloseableHttpResponse response;
 
   private HttpClientContext createContext(MixPanelBatchSourceConfig config) throws MalformedURLException {
-    URL mixPanelUrl = new URL(config.getMixPanelUrl());
+    URL mixPanelUrl = new URL(config.getMixPanelDataUrl());
     HttpHost targetHost = new HttpHost(mixPanelUrl.getHost(), mixPanelUrl.getPort(), mixPanelUrl.getProtocol());
     AuthCache authCache = new BasicAuthCache();
     authCache.put(targetHost, new BasicScheme());
@@ -84,9 +84,9 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
     List<NameValuePair> params = new LinkedList<>();
     params.add(new BasicNameValuePair("from_date", config.getFromDate()));
     params.add(new BasicNameValuePair("to_date", config.getToDate()));
-    String events = config.getEvents();
-    if (events != null && !events.isEmpty()) {
-      params.add(new BasicNameValuePair("event", events));
+    List<String> events = config.getEvents();
+    if (!events.isEmpty()) {
+      params.add(new BasicNameValuePair("event", GSON.toJson(events)));
     }
     String filter = config.getFilter();
     if (filter != null && !filter.isEmpty()) {
@@ -104,7 +104,7 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
     HttpClientContext context = createContext(config);
 
     httpClient = HttpClients.createDefault();
-    HttpPost request = new HttpPost(config.getMixPanelUrl());
+    HttpPost request = new HttpPost(config.getMixPanelDataUrl());
     fillRequest(config, request);
 
     response = httpClient.execute(request, context);

@@ -42,14 +42,17 @@ import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.plugin.mixpanel.source.batch.MixPanelBatchSource;
 import io.cdap.plugin.mixpanel.source.batch.MixPanelBatchSourceConfig;
+import io.cdap.plugin.mixpanel.source.batch.TestHelper;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 public class MixPanelBatchSourceTest extends HydratorTestBase {
@@ -76,22 +79,42 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
 
   @Test
   public void testMixPanelSource() throws Exception {
+    String secret = "verySecureSecret";
+
     WireMock.stubFor(
-      WireMock.post(
-        WireMock.urlMatching("/api/2.0/export"))
-        .withBasicAuth("secret", "")
-        .willReturn(WireMock.aResponse().withBody("data1\ndata2")
-      )
+      WireMock.post(WireMock.urlMatching("/api/2.0/export/"))
+        .withBasicAuth(secret, "")
+        .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("events.jsonl"))
+        )
+    );
+
+    WireMock.stubFor(
+      WireMock.post(WireMock.urlMatching("/api/2.0/events/properties/top/"))
+        .withBasicAuth(secret, "")
+        .withRequestBody(WireMock.containing("Custom+Event"))
+        .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("describe custom event.json"))
+        )
+    );
+
+    WireMock.stubFor(
+      WireMock.post(WireMock.urlMatching("/api/2.0/events/properties/top/"))
+        .withBasicAuth(secret, "")
+        .withRequestBody(WireMock.containing("Plan+Upgraded"))
+        .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("describe plan upgraded.json"))
+        )
     );
 
     Map<String, String> mixPanelProperties = new ImmutableMap.Builder<String, String>()
       .put("referenceName", "testMixPanelSource")
-      .put(MixPanelBatchSourceConfig.PROPERTY_API_SECRET, "secret")
+      .put(MixPanelBatchSourceConfig.PROPERTY_API_SECRET, secret)
       .put(MixPanelBatchSourceConfig.PROPERTY_FROM_DATE, "2018-10-10")
       .put(MixPanelBatchSourceConfig.PROPERTY_TO_DATE, "2019-10-10")
       .put(MixPanelBatchSourceConfig.PROPERTY_URL,
-           String.format("http://localhost:%d/api/2.0/export", wireMockRule.port()))
-      .put(MixPanelBatchSourceConfig.PROPERTY_EVENTS, "events")
+           String.format("http://localhost:%d/api/2.0/export/", wireMockRule.port()))
+      .put(MixPanelBatchSourceConfig.PROPERTY_REST_URL,
+           String.format("http://localhost:%d/", wireMockRule.port()))
+      .put(MixPanelBatchSourceConfig.PROPERTY_EVENTS, "Plan Upgraded,Custom Event")
+      .put(MixPanelBatchSourceConfig.PROPERTY_SCHEMA_BY_EVENTS, "on")
       .build();
 
     ETLStage source = new ETLStage("HttpReader", new ETLPlugin(MixPanelBatchSource.NAME, BatchSource.PLUGIN_TYPE,
@@ -113,18 +136,26 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
     workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     WireMock.verify(
-      WireMock.postRequestedFor(WireMock.urlEqualTo("/api/2.0/export"))
-        .withBasicAuth(new BasicCredentials("secret", ""))
+      WireMock.postRequestedFor(WireMock.urlEqualTo("/api/2.0/export/"))
+        .withBasicAuth(new BasicCredentials(secret, ""))
         .withRequestBody(WireMock.containing("from_date=2018-10-10"))
         .withRequestBody(WireMock.containing("to_date=2019-10-10"))
-        .withRequestBody(WireMock.containing("event=events"))
     );
 
     DataSetManager<Table> outputManager = getDataset(outputDatasetName);
-    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    // ensure records in expected order
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager).stream()
+      .sorted(Comparator.comparing(structuredRecord -> structuredRecord.get("event_name")))
+      .collect(Collectors.toList());
 
     Assert.assertEquals(2, outputRecords.size());
-    Assert.assertEquals("data1", outputRecords.get(0).get("event"));
-    Assert.assertEquals("data2", outputRecords.get(1).get("event"));
+    Assert.assertEquals("Custom Event", outputRecords.get(0).get("event_name"));
+    Assert.assertEquals("Plan Upgraded", outputRecords.get(1).get("event_name"));
+    Assert.assertEquals("data 1 value", outputRecords.get(0).get("data_1"));
+    Assert.assertNull(outputRecords.get(1).get("data_1"));
+    Assert.assertNull(outputRecords.get(0).get("New_Plan"));
+    Assert.assertEquals("premium", outputRecords.get(1).get("New_Plan"));
+    Assert.assertEquals("1.0", outputRecords.get(0).get("lib_version"));
   }
 }

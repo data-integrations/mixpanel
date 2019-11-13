@@ -19,12 +19,16 @@ package io.cdap.plugin.mixpanel.source.batch;
 import io.cdap.cdap.api.annotation.Description;
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.plugin.common.IdUtils;
 import io.cdap.plugin.common.ReferencePluginConfig;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
@@ -37,10 +41,13 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   public static final String PROPERTY_TO_DATE = "toDate";
   public static final String PROPERTY_EVENTS = "events";
   public static final String PROPERTY_FILTER = "filter";
-  public static final String PROPERTY_URL = "mixPanelUrl";
+  public static final String PROPERTY_URL = "mixPanelDataUrl";
+  public static final String PROPERTY_REST_URL = "mixPanelRestApiUrl";
+  public static final String PROPERTY_SCHEMA_BY_EVENTS = "schemaByEvents";
 
   private static final Pattern DATE_REGEX = Pattern.compile("^\\d{4}-\\d{2}-\\d{2}$");
-  public static final String MIXPANEL_DEFAULT_URL = "https://data.mixpanel.com/api/2.0/export/";
+  public static final String MIXPANEL_DEFAULT_DATA_URL = "https://data.mixpanel.com/api/2.0/export";
+  public static final String MIXPANEL_DEFAULT_REST_API_URL = "https://mixpanel.com";
 
   @Name(PROPERTY_API_SECRET)
   @Description("Mixpanel API secret.")
@@ -70,10 +77,24 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   protected String filter;
 
   @Name(PROPERTY_URL)
-  @Description("MixPanel url.")
+  @Description("MixPanel data url.")
   @Nullable
   @Macro
-  protected String mixPanelUrl;
+  protected String mixPanelDataUrl;
+
+  @Name(PROPERTY_REST_URL)
+  @Description("MixPanel rest api url.")
+  @Nullable
+  @Macro
+  protected String mixPanelRestApiUrl;
+
+  @Name(PROPERTY_SCHEMA_BY_EVENTS)
+  @Description("Generate schema by events.")
+  @Macro
+  protected String schemaByEvents;
+
+
+  private transient Schema schema;
 
   public MixPanelBatchSourceConfig(String referenceName) {
     super(referenceName);
@@ -85,7 +106,10 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
     fromDate = builder.fromDate;
     toDate = builder.toDate;
     filter = builder.filter;
-    mixPanelUrl = builder.mixPanelUrl;
+    mixPanelDataUrl = builder.mixPanelDataUrl;
+    events = builder.events;
+    schemaByEvents = builder.schemaByEvents;
+    mixPanelRestApiUrl = builder.mixPanelRestApiUrl;
   }
 
   public static Builder builder() {
@@ -104,9 +128,15 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
     return toDate;
   }
 
-  @Nullable
-  public String getEvents() {
-    return events;
+  public List<String> getEvents() {
+    if (events != null && !events.isEmpty()) {
+      return Arrays.asList(events.split(","));
+    }
+    return Collections.emptyList();
+  }
+
+  public boolean schemaByEvents() {
+    return schemaByEvents.equals("on");
   }
 
   @Nullable
@@ -117,21 +147,46 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   /**
    * Allows to override default mixpanel. Simplifies testing.
    */
-  public String getMixPanelUrl() {
-    if (mixPanelUrl == null || mixPanelUrl.isEmpty()) {
-      return MIXPANEL_DEFAULT_URL;
+  public String getMixPanelDataUrl() {
+    if (mixPanelDataUrl == null || mixPanelDataUrl.isEmpty()) {
+      return MIXPANEL_DEFAULT_DATA_URL;
     }
-    return mixPanelUrl;
+    return mixPanelDataUrl;
+  }
+
+  /**
+   * Allows to override default mixpanel. Simplifies testing.
+   */
+  public String getMixPanelRestApiUrl() {
+    if (mixPanelRestApiUrl == null || mixPanelRestApiUrl.isEmpty()) {
+      return MIXPANEL_DEFAULT_REST_API_URL;
+    }
+    return mixPanelRestApiUrl;
+  }
+
+  public Schema getSchema() {
+    if (schema == null) {
+      schema = MixPanelSchemaHelper.getSchemaFromConfig(this);
+    }
+    return schema;
   }
 
   void validate(FailureCollector failureCollector) {
     IdUtils.validateReferenceName(referenceName, failureCollector);
     try {
-      new URL(getMixPanelUrl());
+      new URL(getMixPanelDataUrl());
     } catch (MalformedURLException e) {
       failureCollector
-        .addFailure(String.format("Invalid URL '%s'.", getMixPanelUrl()), "Change MixPanel url to valid.")
+        .addFailure(String.format("Invalid data URL '%s'.", getMixPanelDataUrl()), "Change MixPanel data url to valid.")
         .withConfigProperty(PROPERTY_URL);
+    }
+    try {
+      new URL(getMixPanelRestApiUrl());
+    } catch (MalformedURLException e) {
+      failureCollector
+        .addFailure(String.format("Invalid rest api URL '%s'.", getMixPanelDataUrl()),
+                    "Change MixPanel rest api url to valid.")
+        .withConfigProperty(PROPERTY_REST_URL);
     }
     if (!DATE_REGEX.matcher(getFromDate()).matches()) {
       failureCollector
@@ -142,6 +197,11 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
       failureCollector
         .addFailure(String.format("Invalid date '%s'.", getToDate()), "Change date to YYYY-MM-DD format.")
         .withConfigProperty(PROPERTY_TO_DATE);
+    }
+    if (schemaByEvents() && getEvents().isEmpty()) {
+      failureCollector
+        .addFailure("No events specified.", "Specify event names or uncheck schemaByEvents.")
+        .withConfigProperty(PROPERTY_SCHEMA_BY_EVENTS);
     }
   }
 
@@ -155,7 +215,9 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
     private String toDate;
     private String events;
     private String filter;
-    private String mixPanelUrl;
+    private String mixPanelDataUrl;
+    private String mixPanelRestApiUrl;
+    private String schemaByEvents;
 
     private Builder() {
 
@@ -191,8 +253,18 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
       return this;
     }
 
-    public Builder setMixPanelUrl(String mixPanelUrl) {
-      this.mixPanelUrl = mixPanelUrl;
+    public Builder setMixPanelDataUrl(String mixPanelDataUrl) {
+      this.mixPanelDataUrl = mixPanelDataUrl;
+      return this;
+    }
+
+    public Builder setSchemaByEvents(String schemaByEvents) {
+      this.schemaByEvents = schemaByEvents;
+      return this;
+    }
+
+    public Builder setMixPanelRestApiUrl(String mixPanelRestApiUrl) {
+      this.mixPanelRestApiUrl = mixPanelRestApiUrl;
       return this;
     }
 
