@@ -26,10 +26,15 @@
           "widget-type": "textbox",
           "label": "To date",
           "name": "toDate"
-        },
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
         {
           "widget-type": "toggle",
-          "label": "Generate schema by events fields",
+          "label": "Generate schema by events",
           "name": "schemaByEvents",
           "widget-attributes": {
             "on": {
@@ -53,12 +58,7 @@
               }
             ]
           }
-        }
-      ]
-    },
-    {
-      "label": "Advanced",
-      "properties": [
+        },
         {
           "widget-type": "csv",
           "label": "Events",

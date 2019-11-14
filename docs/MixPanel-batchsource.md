@@ -16,10 +16,10 @@ Properties
 
 **To date:** End date for reports data in yyyy-mm-dd format.
 
-**Generate schema by events fields:** If enabled, schema will include all unique fields from selected events. Missing
-fields for particular event will have null values. Fields names will be escaped to match Apache Avro naming conventions.
-
 ### Advanced
+
+**Generate schema by events:** If enabled, schema will include all unique fields from selected events. Missing
+fields for particular event will have null values. Fields names will be escaped to match Apache Avro naming conventions.
 
 **Events:** Comma separated list of events you would like to get data on.
 

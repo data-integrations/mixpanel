@@ -89,7 +89,7 @@ public class MixPanelBatchSourceConfig extends ReferencePluginConfig {
   protected String mixPanelRestApiUrl;
 
   @Name(PROPERTY_SCHEMA_BY_EVENTS)
-  @Description("Generate schema by events.")
+  @Description("Include all unique field names from selected events to schema.")
   @Macro
   protected String schemaByEvents;
 
