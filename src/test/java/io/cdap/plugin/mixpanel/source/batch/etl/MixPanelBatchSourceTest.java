@@ -82,14 +82,14 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
     String secret = "verySecureSecret";
 
     WireMock.stubFor(
-      WireMock.post(WireMock.urlMatching("/api/2.0/export/"))
+      WireMock.post(WireMock.urlMatching("\\/api\\/2\\.0\\/export\\/?"))
         .withBasicAuth(secret, "")
         .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("events.jsonl"))
         )
     );
 
     WireMock.stubFor(
-      WireMock.post(WireMock.urlMatching("/api/2.0/events/properties/top/"))
+      WireMock.post(WireMock.urlMatching("\\/api\\/2\\.0\\/events\\/properties\\/top\\/?"))
         .withBasicAuth(secret, "")
         .withRequestBody(WireMock.containing("Custom+Event"))
         .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("describe custom event.json"))
@@ -97,7 +97,7 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
     );
 
     WireMock.stubFor(
-      WireMock.post(WireMock.urlMatching("/api/2.0/events/properties/top/"))
+      WireMock.post(WireMock.urlMatching("\\/api\\/2\\.0\\/events\\/properties\\/top\\/?"))
         .withBasicAuth(secret, "")
         .withRequestBody(WireMock.containing("Plan+Upgraded"))
         .willReturn(WireMock.aResponse().withBody(TestHelper.getResource("describe plan upgraded.json"))
@@ -136,7 +136,7 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
     workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     WireMock.verify(
-      WireMock.postRequestedFor(WireMock.urlEqualTo("/api/2.0/export/"))
+      WireMock.postRequestedFor(WireMock.urlMatching("\\/api\\/2\\.0\\/export\\/?"))
         .withBasicAuth(new BasicCredentials(secret, ""))
         .withRequestBody(WireMock.containing("from_date=2018-10-10"))
         .withRequestBody(WireMock.containing("to_date=2019-10-10"))

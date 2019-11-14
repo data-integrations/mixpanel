@@ -18,38 +18,18 @@ package io.cdap.plugin.mixpanel.source.batch;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.apache.commons.io.Charsets;
-import org.apache.commons.io.IOUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * RecordReader implementation, which reads events in json format from MixPanel api.
@@ -57,30 +37,9 @@ import java.util.Scanner;
 public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
   private static final Gson GSON = new GsonBuilder().create();
   private String currentEvent;
-  private CloseableHttpClient httpClient;
-  private Scanner dataScanner;
-  private CloseableHttpResponse response;
+  private MixPanelApi.RawEventsIterator eventsIterator;
 
-  private HttpClientContext createContext(MixPanelBatchSourceConfig config) throws MalformedURLException {
-    URL mixPanelUrl = new URL(config.getMixPanelDataUrl());
-    HttpHost targetHost = new HttpHost(mixPanelUrl.getHost(), mixPanelUrl.getPort(), mixPanelUrl.getProtocol());
-    AuthCache authCache = new BasicAuthCache();
-    authCache.put(targetHost, new BasicScheme());
-
-    CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    // MixPanel api auth performed by unique ID as username and empty password. No security issues here
-    // when https used as transport
-    credentialsProvider.setCredentials(
-      new AuthScope(mixPanelUrl.getHost(), mixPanelUrl.getPort()),
-      new UsernamePasswordCredentials(config.getApiSecret(), ""));
-
-    HttpClientContext context = HttpClientContext.create();
-    context.setCredentialsProvider(credentialsProvider);
-    context.setAuthCache(authCache);
-    return context;
-  }
-
-  private void fillRequest(MixPanelBatchSourceConfig config, HttpPost request) throws UnsupportedEncodingException {
+  private List<NameValuePair> getExportParameters(MixPanelBatchSourceConfig config) {
     List<NameValuePair> params = new LinkedList<>();
     params.add(new BasicNameValuePair("from_date", config.getFromDate()));
     params.add(new BasicNameValuePair("to_date", config.getToDate()));
@@ -92,39 +51,24 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
     if (filter != null && !filter.isEmpty()) {
       params.add(new BasicNameValuePair("where", filter));
     }
-    request.setEntity(new UrlEncodedFormEntity(params));
+    return params;
   }
 
   @Override
-  public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) throws IOException {
+  public void initialize(InputSplit inputSplit, TaskAttemptContext taskAttemptContext) {
     Configuration conf = taskAttemptContext.getConfiguration();
     String configJson = conf.get(MixPanelInputFormatProvider.PROPERTY_CONFIG_JSON);
     MixPanelBatchSourceConfig config = GSON.fromJson(configJson, MixPanelBatchSourceConfig.class);
 
-    HttpClientContext context = createContext(config);
-
-    httpClient = HttpClients.createDefault();
-    HttpPost request = new HttpPost(config.getMixPanelDataUrl());
-    fillRequest(config, request);
-
-    response = httpClient.execute(request, context);
-    if (response.getStatusLine().getStatusCode() >= 300) {
-      String output = IOUtils.toString(response.getEntity().getContent(), Charsets.UTF_8);
-      throw new IOException(
-        String.format(
-          "Failed to fetch MixPanel events, code: %s, output: %s",
-          response.getStatusLine().getStatusCode(),
-          output
-        )
-      );
-    }
-    dataScanner = new Scanner(response.getEntity().getContent());
+    MixPanelApi api = new MixPanelApi(config.getApiSecret(), config.getMixPanelRestApiUrl(),
+                                      config.getMixPanelDataUrl());
+    eventsIterator = api.getRawEvents(getExportParameters(config));
   }
 
   @Override
   public boolean nextKeyValue() {
-    if (dataScanner.hasNextLine()) {
-      currentEvent = dataScanner.nextLine();
+    if (eventsIterator.hasNext()) {
+      currentEvent = eventsIterator.next();
       return true;
     } else {
       return false;
@@ -148,14 +92,8 @@ public class MixPanelRecordReader extends RecordReader<NullWritable, Text> {
 
   @Override
   public void close() throws IOException {
-    if (dataScanner != null) {
-      dataScanner.close();
-    }
-    if (response != null) {
-      response.close();
-    }
-    if (httpClient != null) {
-      httpClient.close();
+    if (eventsIterator != null) {
+      eventsIterator.close();
     }
   }
 }

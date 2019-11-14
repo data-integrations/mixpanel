@@ -47,7 +47,8 @@ public class MixPanelSchemaHelper {
 
   public static Schema getSchemaFromConfig(MixPanelBatchSourceConfig config) {
     if (config.schemaByEvents()) {
-      MixPanelApi api = new MixPanelApi(config.getApiSecret(), config.getMixPanelRestApiUrl());
+      MixPanelApi api = new MixPanelApi(config.getApiSecret(), config.getMixPanelRestApiUrl(),
+                                        config.getMixPanelDataUrl());
 
       Map<String, String> mappedFields = new HashMap<>();
 
