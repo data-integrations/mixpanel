@@ -1,0 +1,8 @@
+{
+  "regular field": {
+    "count": 3
+  },
+  "$conflict$": {
+    "count": 3
+  }
+}

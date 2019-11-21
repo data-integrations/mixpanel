@@ -1,0 +1,104 @@
+{
+  "metadata": {
+    "spec-version": "1.0"
+  },
+  "display-name" : "MixPanel",
+  "configuration-groups": [
+    {
+      "label": "General",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Reference Name",
+          "name": "referenceName"
+        },
+        {
+          "widget-type": "password",
+          "label": "API Secret",
+          "name": "apiSecret"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "From date",
+          "name": "fromDate"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "To date",
+          "name": "toDate"
+        }
+      ]
+    },
+    {
+      "label": "Advanced",
+      "properties": [
+        {
+          "widget-type": "toggle",
+          "label": "Generate schema by events",
+          "name": "schemaByEvents",
+          "widget-attributes": {
+            "on": {
+              "value": "on",
+              "label": "On"
+            },
+            "off": {
+              "value": "off",
+              "label": "Off"
+            },
+            "default": "off"
+          },
+          "plugin-function": {
+            "label": "Get Schema",
+            "widget": "outputSchema",
+            "output-property": "schema",
+            "position": "bottom",
+            "omit-properties": [
+              {
+                "name": "schema"
+              }
+            ]
+          }
+        },
+        {
+          "widget-type": "csv",
+          "label": "Events",
+          "name": "events"
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Filter",
+          "name": "filter"
+        },
+        {
+          "widget-type": "hidden",
+          "name": "mixPanelDataUrl",
+          "widget-attributes": {
+            "default": "https://data.mixpanel.com/api/2.0/export/"
+          }
+        },
+        {
+          "widget-type": "hidden",
+          "name": "mixPanelRestApiUrl",
+          "widget-attributes": {
+            "default": "https://mixpanel.com"
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "widget-type": "non-editable-schema-editor",
+      "schema": {
+        "name": "fileRecord",
+        "type": "record",
+        "fields": [
+          {
+            "name": "raw_event",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

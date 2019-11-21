@@ -1,0 +1,17 @@
+{
+  "data 2": {
+    "count": 10
+  },
+  "$lib_version": {
+    "count": 10
+  },
+  "$event_name": {
+    "count": 10
+  },
+  "mp_lib": {
+    "count": 10
+  },
+  "data 1": {
+    "count": 10
+  }
+}
