@@ -146,12 +146,12 @@ public class MixPanelBatchSourceTest extends HydratorTestBase {
 
     // ensure records in expected order
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager).stream()
-      .sorted(Comparator.comparing(structuredRecord -> structuredRecord.get("event_name")))
+      .sorted(Comparator.comparing(structuredRecord -> structuredRecord.get("event")))
       .collect(Collectors.toList());
 
     Assert.assertEquals(2, outputRecords.size());
-    Assert.assertEquals("Custom Event", outputRecords.get(0).get("event_name"));
-    Assert.assertEquals("Plan Upgraded", outputRecords.get(1).get("event_name"));
+    Assert.assertEquals("Custom Event", outputRecords.get(0).get("event"));
+    Assert.assertEquals("Plan Upgraded", outputRecords.get(1).get("event"));
     Assert.assertEquals("data 1 value", outputRecords.get(0).get("data_1"));
     Assert.assertNull(outputRecords.get(1).get("data_1"));
     Assert.assertNull(outputRecords.get(0).get("New_Plan"));
