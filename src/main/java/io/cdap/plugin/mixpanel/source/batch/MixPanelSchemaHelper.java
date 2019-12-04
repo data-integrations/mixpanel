@@ -40,7 +40,7 @@ public class MixPanelSchemaHelper {
   }
 
   private static final Gson GSON = new GsonBuilder().create();
-  private static final String EVENT_NAME_FIELD = "event_name";
+  private static final String EVENT_NAME_FIELD = "event";
   private static final String EVENT_NAME_FIELD_DESC = "$event_name";
   private static final Schema MIX_PANEL_RECORD_SCHEMA = Schema.recordOf(
     "mixPanelRecord", Schema.Field.of("raw_event", Schema.of(Schema.Type.STRING)));
@@ -71,7 +71,7 @@ public class MixPanelSchemaHelper {
         .collect(Collectors.toSet());
 
       // make sure default fields available
-      fieldNames.add("event_name");
+      fieldNames.add(EVENT_NAME_FIELD);
       fieldNames.add("distinct_id");
       fieldNames.add("time");
 
