@@ -30,7 +30,7 @@
     <!-- properties for script build step that creates the config files for the artifacts -->
     <cdap.version>6.1.0-SNAPSHOT</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
-    <httpcomponents.version>4.5.9</httpcomponents.version>
+    <httpcomponents.version>4.5.13</httpcomponents.version>
     <hydrator.version>2.3.0-SNAPSHOT</hydrator.version>
     <junit.version>4.11</junit.version>
     <mockito.version>1.10.19</mockito.version>
